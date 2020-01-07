@@ -31,6 +31,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"knative.dev/eventing/pkg/kncloudevents"
 )
 
 var (
@@ -570,7 +571,13 @@ func TestDispatchMessage(t *testing.T) {
 			tctx.Header = tc.header
 			ctx = cehttp.WithTransportContext(ctx, tctx)
 
-			md := NewEventDispatcher(zap.NewNop())
+			config := EventDispatcherConfig{
+				ConnectionArgs: kncloudevents.ConnectionArgs{
+					MaxIdleConns:        defaultMaxIdleConnections,
+					MaxIdleConnsPerHost: defaultMaxIdleConnectionsPerHost,
+				},
+			}
+			md := NewEventDispatcher(zap.NewNop(), config)
 			destination := getDomain(t, tc.sendToDestination, destServer.URL)
 			reply := getDomain(t, tc.sendToReply, replyServer.URL)
 
