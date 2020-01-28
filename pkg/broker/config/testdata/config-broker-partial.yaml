@@ -47,5 +47,8 @@ data:
         },
         "initialDelaySeconds":50,
         "periodSeconds":20
-      }
+      },
+      "maxIdleConns":10,
+      "maxIdleConnsPerHost":1,
+      "metricsPort": 10
     }
