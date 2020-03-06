@@ -25,7 +25,7 @@ import (
 )
 
 // MakeConfigMapPropagation creates a default ConfigMapPropagation object for Namespace 'namespace'.
-func MakeConfigMapPropagation(namespace *corev1.Namespace) *v1alpha1.ConfigMapPropagation {
+func MakeConfigMapPropagation(namespace *corev1.Namespace, name string) *v1alpha1.ConfigMapPropagation {
 	return &v1alpha1.ConfigMapPropagation{
 		ObjectMeta: metav1.ObjectMeta{
 			OwnerReferences: []metav1.OwnerReference{
@@ -36,7 +36,7 @@ func MakeConfigMapPropagation(namespace *corev1.Namespace) *v1alpha1.ConfigMapPr
 				}),
 			},
 			Namespace: namespace.Name,
-			Name:      DefaultConfigMapPropagationName,
+			Name:      name,
 		},
 		Spec: v1alpha1.ConfigMapPropagationSpec{
 			OriginalNamespace: system.Namespace(),

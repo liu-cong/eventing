@@ -98,7 +98,7 @@ func TestAllCases(t *testing.T) {
 	rbIngress := resources.MakeRoleBinding(resources.IngressRoleBindingName, namespace, testNS, resources.MakeServiceAccount(namespace, resources.IngressServiceAccountName), resources.IngressClusterRoleName)
 	saFilter := resources.MakeServiceAccount(namespace, resources.FilterServiceAccountName)
 	rbFilter := resources.MakeRoleBinding(resources.FilterRoleBindingName, namespace, testNS, resources.MakeServiceAccount(namespace, resources.FilterServiceAccountName), resources.FilterClusterRoleName)
-	configMapPropagation := resources.MakeConfigMapPropagation(namespace)
+	configMapPropagation := resources.MakeConfigMapPropagation(namespace, resources.DefaultConfigMapPropagationName)
 
 	table := TableTest{{
 		Name: "bad workqueue key",
@@ -414,15 +414,21 @@ func TestAllCases(t *testing.T) {
 	// used to determine which test we are on
 	testNum := 0
 	table.Test(t, MakeFactory(func(ctx context.Context, listers *Listers, cmw configmap.Watcher) controller.Reconciler {
+		base := reconciler.NewBase(ctx, controllerAgentName, cmw)
+
+		var nop namespaceObjectPropagator = &configmapPropagator{
+			configMapPropagationLister: listers.GetConfigMapPropagationLister(),
+			clientset: base.EventingClientSet,
+		}
 
 		r := &Reconciler{
-			Base:                       reconciler.NewBase(ctx, controllerAgentName, cmw),
+			Base:                       base,
 			namespaceLister:            listers.GetNamespaceLister(),
 			brokerLister:               listers.GetV1Beta1BrokerLister(),
 			serviceAccountLister:       listers.GetServiceAccountLister(),
 			roleBindingLister:          listers.GetRoleBindingLister(),
-			configMapPropagationLister: listers.GetConfigMapPropagationLister(),
 			brokerPullSecretName:       brokerImagePullSecretName,
+			nop:nop,
 		}
 
 		// only create secret in required tests

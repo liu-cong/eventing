@@ -19,7 +19,6 @@ package namespace
 import (
 	"context"
 	"fmt"
-
 	"k8s.io/client-go/tools/cache"
 	"knative.dev/eventing/pkg/reconciler/namespace/resources"
 	"knative.dev/eventing/pkg/utils"
@@ -27,7 +26,6 @@ import (
 
 	corev1listers "k8s.io/client-go/listers/core/v1"
 	rbacv1listers "k8s.io/client-go/listers/rbac/v1"
-	configslisters "knative.dev/eventing/pkg/client/listers/configs/v1alpha1"
 	eventinglisters "knative.dev/eventing/pkg/client/listers/eventing/v1beta1"
 
 	"go.uber.org/zap"
@@ -69,11 +67,12 @@ type Reconciler struct {
 	brokerPullSecretName string
 
 	// listers index properties about resources
-	namespaceLister            corev1listers.NamespaceLister
-	serviceAccountLister       corev1listers.ServiceAccountLister
-	roleBindingLister          rbacv1listers.RoleBindingLister
-	brokerLister               eventinglisters.BrokerLister
-	configMapPropagationLister configslisters.ConfigMapPropagationLister
+	namespaceLister      corev1listers.NamespaceLister
+	serviceAccountLister corev1listers.ServiceAccountLister
+	roleBindingLister    rbacv1listers.RoleBindingLister
+	brokerLister         eventinglisters.BrokerLister
+
+	nop namespaceObjectPropagator
 }
 
 // Check that our Reconciler implements controller.Reconciler
@@ -145,19 +144,19 @@ func (r *Reconciler) reconcile(ctx context.Context, ns *corev1.Namespace) error 
 }
 
 // reconcileConfigMapPropagation reconciles the default ConfigMapPropagation for the Namespace 'ns'.
-func (r *Reconciler) reconcileConfigMapPropagation(ctx context.Context, ns *corev1.Namespace) (*configsv1alpha1.ConfigMapPropagation, error) {
-	current, err := r.configMapPropagationLister.ConfigMapPropagations(ns.Name).Get(resources.DefaultConfigMapPropagationName)
+func (r *Reconciler) reconcileConfigMapPropagation(ctx context.Context, ns *corev1.Namespace) (interface{}, error) {
+	fmt.Println("========reconciling configmap propagation")
+	current, err := r.nop.get(ns)
 
 	// If the resource doesn't exist, we'll create it.
 	if k8serrors.IsNotFound(err) {
-		cmp := resources.MakeConfigMapPropagation(ns)
-		cmp, err = r.EventingClientSet.ConfigsV1alpha1().ConfigMapPropagations(ns.Name).Create(cmp)
+		obj, err := r.nop.create(ns)
 		if err != nil {
 			return nil, err
 		}
 		r.Recorder.Event(ns, corev1.EventTypeNormal, configMapPropagationCreated,
-			"Default ConfigMapPropagation: "+cmp.Name+" created")
-		return cmp, nil
+			"Default ConfigMapPropagation: "+r.nop.name(ns)+" created")
+		return obj, nil
 	} else if err != nil {
 		return nil, err
 	}
