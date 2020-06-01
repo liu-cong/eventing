@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"context"
+	"fmt"
 
 	"knative.dev/pkg/apis"
 )
@@ -28,11 +29,15 @@ const (
 
 func (t *Trigger) SetDefaults(ctx context.Context) {
 	withNS := apis.WithinParent(ctx, t.ObjectMeta)
+	fmt.Printf("\n ==========Trigger Set Defaults: %+v", apis.ParentMeta(ctx))
+
 	t.Spec.SetDefaults(withNS)
 	setLabels(t)
 }
 
 func (ts *TriggerSpec) SetDefaults(ctx context.Context) {
+	fmt.Printf("\n ==========Trigger Spec SEt Defaults: %+v", apis.ParentMeta(ctx))
+
 	if ts.Broker == "" {
 		ts.Broker = "default"
 	}

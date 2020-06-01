@@ -73,15 +73,18 @@ func (ac *reconciler) Admit(ctx context.Context, request *admissionv1beta1.Admis
 		Kind:    kind.Kind,
 	}
 
+	// ctx contains info like userInfo
 	ctx, resource, err := ac.decodeRequestAndPrepareContext(ctx, request, gvk)
 	if err != nil {
 		return webhook.MakeErrorStatus("decoding request failed: %v", err)
 	}
 
+	// Validate
 	if err := validate(ctx, resource, request); err != nil {
 		return webhook.MakeErrorStatus("validation failed: %v", err)
 	}
 
+	// And callback
 	if err := ac.callback(ctx, request, gvk); err != nil {
 		return webhook.MakeErrorStatus("validation callback failed: %v", err)
 	}
@@ -131,7 +134,9 @@ func (ac *reconciler) decodeRequestAndPrepareContext(
 		}
 	}
 
+	// user info
 	ctx = apis.WithUserInfo(ctx, &req.UserInfo)
+	ctx = apis.WithAdmissionRequest(ctx, req)
 	ctx = context.WithValue(ctx, kubeclient.Key{}, ac.client)
 	if req.DryRun != nil && *req.DryRun {
 		ctx = apis.WithDryRun(ctx)

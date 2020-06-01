@@ -35,6 +35,7 @@ var (
 
 // Validate the Trigger.
 func (t *Trigger) Validate(ctx context.Context) *apis.FieldError {
+	fmt.Println("===========Validate Trigger...")
 	errs := t.Spec.Validate(ctx).ViaField("spec")
 	errs = t.validateAnnotation(errs, DependencyAnnotation, t.validateDependencyAnnotation)
 	errs = t.validateAnnotation(errs, InjectionAnnotation, t.validateInjectionAnnotation)
@@ -43,6 +44,9 @@ func (t *Trigger) Validate(ctx context.Context) *apis.FieldError {
 
 // Validate the TriggerSpec.
 func (ts *TriggerSpec) Validate(ctx context.Context) *apis.FieldError {
+	fmt.Println("===========Validate Trigger Spec...")
+	fmt.Printf("\n ===============Context: %+v \n", ctx)
+
 	var errs *apis.FieldError
 	if ts.Broker == "" {
 		fe := apis.ErrMissingField("broker")

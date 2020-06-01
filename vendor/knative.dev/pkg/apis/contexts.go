@@ -20,6 +20,7 @@ import (
 	"context"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
+	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -117,6 +118,20 @@ func WithUserInfo(ctx context.Context, ui *authenticationv1.UserInfo) context.Co
 // GetUserInfo accesses the UserInfo attached to the webhook context.
 func GetUserInfo(ctx context.Context) *authenticationv1.UserInfo {
 	if ui, ok := ctx.Value(userInfoKey{}).(*authenticationv1.UserInfo); ok {
+		return ui
+	}
+	return nil
+}
+
+type admissionRequestKey struct{}
+
+func WithAdmissionRequest(ctx context.Context, r *admissionv1beta1.AdmissionRequest) context.Context {
+	return context.WithValue(ctx, admissionRequestKey{}, r)
+}
+
+// GetUserInfo accesses the UserInfo attached to the webhook context.
+func GetAdmissionRequest(ctx context.Context) *admissionv1beta1.AdmissionRequest {
+	if ui, ok := ctx.Value(admissionRequestKey{}).(*admissionv1beta1.AdmissionRequest); ok {
 		return ui
 	}
 	return nil

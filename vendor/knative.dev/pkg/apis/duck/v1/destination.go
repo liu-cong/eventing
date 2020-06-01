@@ -18,6 +18,7 @@ package v1
 
 import (
 	"context"
+	"fmt"
 
 	"knative.dev/pkg/apis"
 )
@@ -44,6 +45,7 @@ func (dest *Destination) Validate(ctx context.Context) *apis.FieldError {
 
 // ValidateDestination validates Destination.
 func ValidateDestination(ctx context.Context, dest Destination) *apis.FieldError {
+	fmt.Printf("\n ==============Validate Destination")
 	ref := dest.Ref
 	uri := dest.URI
 	if ref == nil && uri == nil {
@@ -73,6 +75,7 @@ func (dest *Destination) GetRef() *KReference {
 }
 
 func (d *Destination) SetDefaults(ctx context.Context) {
+	fmt.Printf("\n ==========Destination SEt Defaults: %+v", apis.ParentMeta(ctx))
 	if d.Ref != nil && d.Ref.Namespace == "" {
 		d.Ref.Namespace = apis.ParentMeta(ctx).Namespace
 	}

@@ -16,13 +16,14 @@ limitations under the License.
 
 package controller
 
-import "knative.dev/pkg/reconciler"
+//import "knative.dev/pkg/reconciler"
+import "context"
 
 // Options is additional resources a Controller might want to use depending
 // on implementation.
 type Options struct {
 	// ConfigStore is used to attach the frozen configuration to the context.
-	ConfigStore reconciler.ConfigStore
+	ConfigStore ConfigStore
 
 	// FinalizerName is the name of the finalizer this reconciler uses. This
 	// overrides a default finalizer name assigned by the generator if needed.
@@ -31,6 +32,12 @@ type Options struct {
 	// AgentName is the name of the agent this reconciler uses. This overrides
 	// the default controller's agent name.
 	AgentName string
+}
+
+// ConfigStore is used to attach the frozen configuration to the context.
+type ConfigStore interface {
+	// ConfigStore is used to attach the frozen configuration to the context.
+	ToContext(ctx context.Context) context.Context
 }
 
 // OptionsFn is a callback method signature that accepts an Impl and returns

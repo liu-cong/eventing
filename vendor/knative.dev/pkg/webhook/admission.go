@@ -70,12 +70,16 @@ func admissionHandler(rootLogger *zap.SugaredLogger, stats StatsReporter, c Admi
 		var ttStart = time.Now()
 		logger := rootLogger
 		logger.Infof("Webhook ServeHTTP request=%#v", r)
-
+		// init admission review request
 		var review admissionv1beta1.AdmissionReview
+		// decode to review request
 		if err := json.NewDecoder(r.Body).Decode(&review); err != nil {
 			http.Error(w, fmt.Sprintf("could not decode body: %v", err), http.StatusBadRequest)
 			return
 		}
+
+		logger.Infof("$$$$$$$$$$$$$Webhook admission review: %+v", review.Request.UserInfo)
+
 
 		logger = logger.With(
 			zap.String(logkey.Kind, review.Request.Kind.String()),

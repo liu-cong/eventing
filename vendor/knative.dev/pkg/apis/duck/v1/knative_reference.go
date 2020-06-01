@@ -20,7 +20,9 @@ import (
 	"context"
 	"fmt"
 
+	authorizationapi "k8s.io/api/authorization/v1"
 	"knative.dev/pkg/apis"
+	kubeclient "knative.dev/pkg/client/injection/kube/client"
 )
 
 // KReference contains enough information to refer to another object.
@@ -45,6 +47,36 @@ type KReference struct {
 }
 
 func (kr *KReference) Validate(ctx context.Context) *apis.FieldError {
+	client := kubeclient.Get(ctx)
+	user := apis.GetUserInfo(ctx)
+	admissionRequest := apis.GetAdmissionRequest(ctx)
+	fmt.Printf("\n ==============Validate KReference. User: %+v \n", user)
+	fmt.Printf("\n ==============Validate KReference. Admission Request: %+v \n", admissionRequest)
+
+
+	sar := &authorizationapi.SubjectAccessReview{
+		Spec: authorizationapi.SubjectAccessReviewSpec{
+			ResourceAttributes:    &authorizationapi.ResourceAttributes{
+				Namespace:   admissionRequest.Namespace,
+				Verb:        string(admissionRequest.Operation),
+				Group:       admissionRequest.Resource.Group,
+				Version:     admissionRequest.Resource.Version,
+				Resource:    admissionRequest.Resource.Resource,
+				Subresource: "",
+				Name:        admissionRequest.Name,
+			},
+			NonResourceAttributes: nil,
+			User:                  user.Username,
+			Groups:                user.Groups,
+			Extra:                 nil,
+			UID:                   user.UID,
+		},
+	}
+	fmt.Printf("\n ~~~~~~~~~~$$$$$$$$$$$$$$$$$$$$$$ sar: %+v\n", sar)
+
+	res, err := client.AuthorizationV1().SubjectAccessReviews().CreateContext(ctx, sar)
+	fmt.Printf("\n ~~~~~~~~~~$$$$$$$$$$$$$$$$$$$$$$ res: %+v, err: %v \n", res, err)
+
 	var errs *apis.FieldError
 	if kr == nil {
 		return errs.Also(apis.ErrMissingField("name")).
@@ -65,8 +97,11 @@ func (kr *KReference) Validate(ctx context.Context) *apis.FieldError {
 	// Because things get defaulted in other cases, moving forward the
 	// kr.Namespace will not be empty.
 	if kr.Namespace != "" {
+		fmt.Printf("\n ==============IsDifNsAllowed: %v, \n", apis.IsDifferentNamespaceAllowed(ctx))
+
 		if !apis.IsDifferentNamespaceAllowed(ctx) {
 			parentNS := apis.ParentMeta(ctx).Namespace
+			fmt.Printf("\n ==============parentNS: %v, kr.Ns: %v \n", parentNS, kr.Namespace)
 			if parentNS != "" && kr.Namespace != parentNS {
 				errs = errs.Also(&apis.FieldError{
 					Message: "mismatched namespaces",
